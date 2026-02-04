@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sarah & David - L'Invitation</title>
+    
+    <!-- Import des polices Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Great+Vibes&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+    <!-- FontAwesome pour les icônes (coeurs, bagues, etc.) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- CONFIGURATION DES COULEURS (A modifier selon le client) --- */
+        :root {
+            --gold: #D4AF37;
+            --cream: #FAF9F6; /* Fond crème très clair */
+            --paper: #fffcf5; /* Couleur papier texturé */
+            --dark: #2C2C2C;
+            --text-grey: #555;
+            --font-title: 'Cinzel', serif;      
+            --font-script: 'Great Vibes', cursive; 
+            --font-body: 'Lato', sans-serif;    
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font-body); color: var(--dark); background-color: var(--cream); overflow-x: hidden; }
+
+        /* --- EFFET PÉTALES DE ROSE --- */
+        #petals-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* Permet de cliquer au travers des pétales */
+            z-index: 9000; /* Au-dessus du contenu mais sous l'écran d'accueil (9999) */
+            overflow: hidden;
+        }
+
+        .petal {
+            position: absolute;
+            top: -50px; /* Commence au dessus de l'écran */
+            background: linear-gradient(to bottom right, #ffccd5, #fff0f3); /* Rose pâle dégradé */
+            border-radius: 100% 0 100% 0; /* Forme de pétale */
+            opacity: 0.8;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+            animation: fall linear infinite;
+        }
+
+        @keyframes fall {
+            0% {
+                top: -10%;
+                transform: translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.9;
+            }
+            100% {
+                top: 110%;
+                transform: translateX(var(--drift)) rotate(360deg);
+                opacity: 0.6;
+            }
+        }
+
+        /* --- 1. ÉCRAN D'ACCUEIL (SPLASH SCREEN) --- */
+        #welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            /* Tes images locales */
+            background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('RabbiHoupa.png');
+            background-size: cover;
+            background-position: center;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+        }
+
+        #welcome-screen.hidden {
+            transform: translateY(-100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .welcome-names {
+            font-family: var(--font-script);
+            font-size: 5rem;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .welcome-date {
+            font-family: var(--font-title);
+            font-size: 1.5rem;
+            letter-spacing: 5px;
+            margin-bottom: 3rem;
+            text-transform: uppercase;
+        }
+
+        .btn-enter {
+            padding: 15px 40px;
+            background-color: transparent;
+            border: 2px solid white;
+            color: white;
+            font-family: var(--font-title);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .btn-enter:hover {
+            background-color: white;
+            color: var(--dark);
+            transform: scale(1.05);
+        }
+
+        /* --- CONTROLE MUSIQUE MODERNE (STYLE IMAGE) --- */
+        #music-widget {
+            position: fixed;
+            top: 20px;
+            right: 20px; /* Ou left: 50% / transform: translateX(-50%) pour centrer */
+            z-index: 1000;
+            display: none; /* Caché au début */
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            font-family: var(--font-body);
+            color: var(--gold);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+        }
+
+        #music-widget:hover {
+            background: white;
+            transform: scale(1.05);
+        }
+
+        .music-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+            color: var(--text-grey);
+        }
+
+        .music-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.2rem;
+        }
+
+        /* Animation des barres musicales */
+        .equalizer {
+            display: flex;
+            gap: 3px;
+            height: 15px;
+            align-items: flex-end;
+        }
+        .bar {
+            width: 3px;
+            background-color: var(--gold);
+            animation: bounce 1s infinite;
+        }
+        .bar:nth-child(2) { animation-delay: 0.2s; }
+        .bar:nth-child(3) { animation-delay: 0.4s; }
+        
+        .paused .bar { animation: none; height: 3px; }
+
+        @keyframes bounce {
+            0%, 100% { height: 3px; }
+            50% { height: 15px; }
+        }
+
+        /* --- 2. LE SITE PRINCIPAL --- */
+        #main-content {
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+        #main-content.visible {
+            opacity: 1;
+        }
+
+        h2 { font-family: var(--font-title); color: var(--gold); text-align: center; font-size: 2.5rem; margin-bottom: 2rem; text-transform: uppercase; letter-spacing: 2px; }
+        .section-padding { padding: 4rem 1rem; }
+        .container { max-width: 800px; margin: 0 auto; } 
+
+        /* SECTION HERO */
+        .hero-inner {
+            height: 70vh;
+            /* Tes images locales */
+            background: url('Rabbi2.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .hero-overlay {
+            background: rgba(255,255,255,0.9);
+            padding: 2rem 4rem;
+            text-align: center;
+            border: 1px solid var(--gold);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* COMPTE A REBOURS */
+        .countdown { display: flex; justify-content: center; gap: 2rem; margin-top: 1rem; }
+        .time-val { font-size: 2rem; font-family: var(--font-title); color: var(--gold); }
+        .time-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* --- STYLE FAIRE-PART (Type Papier) --- */
+        .faire-part-section {
+            background-color: var(--cream);
+            padding: 3rem 1rem;
+        }
+
+        .faire-part-card {
+            background-color: var(--paper);
+            padding: 4rem 2rem;
+            text-align: center;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+            border: 1px solid #efe8d8;
+            position: relative;
+        }
+
+        .faire-part-card::before {
+            content: "❧";
+            display: block;
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 1rem;
+        }
+
+        .bsd {
+            font-family: var(--font-title);
+            font-size: 0.9rem;
+            color: var(--text-grey);
+            margin-bottom: 2rem;
+            letter-spacing: 1px;
+        }
+
+        .parents-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            font-family: var(--font-title);
+            font-size: 0.9rem;
+            color: var(--dark);
+            margin-bottom: 2.5rem;
+            line-height: 1.8;
+        }
+        
+        .parents-column { text-align: center; }
+
+        .invitation-text {
+            font-family: var(--font-body);
+            font-size: 1.1rem;
+            font-weight: 300;
+            color: var(--text-grey);
+            margin-bottom: 2rem;
+            line-height: 1.8;
+            padding: 0 1rem;
+        }
+
+        .couple-names-script {
+            font-family: var(--font-script);
+            font-size: 4rem;
+            color: var(--gold); 
+            margin: 1rem 0;
+            line-height: 1.2;
+        }
+        
+        .ampersand {
+            font-family: var(--font-title);
+            font-size: 1.5rem;
+            color: var(--text-grey);
+            vertical-align: middle;
+            margin: 0 10px;
+        }
+
+        .ceremony-details {
+            font-family: var(--font-title);
+            color: var(--dark);
+            margin-top: 2rem;
+        }
+        
+        .ceremony-details p { margin-bottom: 0.5rem; }
+
+        .hebrew-date {
+            font-size: 1rem;
+            color: var(--text-grey);
+            margin-bottom: 0.5rem;
+        }
+
+        .main-date {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .time-highlight {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .location-text {
+            margin-top: 2rem;
+            font-family: var(--font-body);
+            font-style: italic;
+        }
+
+        /* RSVP */
+        .rsvp-section { background-color: var(--white); border-top: 1px solid #eee; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; font-family: var(--font-body); }
+        button[type="submit"] { background-color: var(--gold); color: white; border: none; padding: 15px 30px; font-family: var(--font-title); cursor: pointer; width: 100%; font-size: 1.1rem; transition: background 0.3s; }
+        button[type="submit"]:hover { background-color: #b08d2b; }
+
+        /* Cache le champ nombre de personnes par défaut */
+        #guest-count-container {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        #guest-count-container.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        /* MOBILE */
+        @media (max-width: 768px) {
+            .parents-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .couple-names-script { font-size: 3rem; }
+            .hero-inner { height: 50vh; }
+            .faire-part-card { padding: 2rem 1rem; }
+            #music-control { bottom: 10px; right: 10px; }
+        }
+    </style>
+</head>
+<body>
+    
+    <!-- Conteneur pour les pétales -->
+    <div id="petals-container"></div>
+
+    <!-- === AUDIO === -->
+    <!-- Utilise ton fichier renommé musique.mpeg -->
+    <audio id="bg-music" loop>
+        <source src="musique.mpeg" type="audio/mpeg">
+    </audio>
+
+    <!-- WIDGET MUSIQUE STYLE IMAGE -->
+    <div id="music-widget" onclick="toggleMusic()">
+        <span class="music-label">Musique d'ambiance</span>
+        <div class="music-controls" id="music-indicator">
+            <i class="fas fa-play" id="play-icon"></i>
+            <!-- Petite animation equalizer -->
+            <div class="equalizer paused" id="equalizer">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === PARTIE 1 : L'ÉCRAN D'ACCUEIL (PORTAIL) === -->
+    <div id="welcome-screen">
+        <div class="welcome-names">Sarah & David</div>
+        <div class="welcome-date">25 . 08 . 2025</div>
+        <!-- L'action enterSite() lance maintenant la musique -->
+        <button class="btn-enter" onclick="enterSite()">Voir l'invitation</button>
+    </div>
+
+    <!-- === PARTIE 2 : LE SITE COMPLET === -->
+    <div id="main-content">
+        
+        <!-- HERO BANNER -->
+        <header class="hero-inner">
+            <div class="hero-overlay">
+                <p style="font-style: italic; margin-bottom: 10px;">Kol Sasson Ve Kol Simha</p>
+                <h1 style="font-family: var(--font-title); font-size: 2.5rem; color: var(--dark);">Sarah & David</h1>
+                <div class="countdown">
+                    <div class="time-box"><span id="d" class="time-val">00</span><span class="time-label">Jours</span></div>
+                    <div class="time-box"><span id="h" class="time-val">00</span><span class="time-label">H</span></div>
+                    <div class="time-box"><span id="m" class="time-val">00</span><span class="time-label">M</span></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- INVITATION (FAIRE-PART PAPIER) -->
+        <section class="faire-part-section">
+            <div class="container">
+                <div class="faire-part-card">
+                    <div class="bsd">Bs"d</div>
+
+                    <div class="parents-grid">
+                        <div class="parents-column">
+                            <p>Les mamies Rachel et Gisèle</p>
+                            <br>
+                            <p>M. & Mme Abraham Cohen</p>
+                            <p>M. & Mme Isaac Levi</p>
+                        </div>
+                        <div class="parents-column">
+                            <p>M. & Mme Yossef Nejar</p>
+                            <br>
+                            <p>Mme 'Hanna Djian</p>
+                            <p>M. & Mme M.M Nissim Nejar</p>
+                        </div>
+                    </div>
+
+                    <div class="invitation-text">
+                        Remercient Hachem d'avoir la joie de vous<br>
+                        faire part du mariage de leurs enfants
+                    </div>
+
+                    <div class="couple-names-script">
+                        Sarah <span class="ampersand">&</span> David
+                    </div>
+
+                    <div class="ceremony-details">
+                        <div class="invitation-text">
+                            Et vous prient de bien vouloir assister à la<br>
+                            'Houpa qui sera célébrée SDV
+                        </div>
+
+                        <p class="main-date">Le Lundi 25 Août 2025</p>
+                        <p class="hebrew-date">1 Eloul 5785</p>
+                        <p style="margin-top: 10px;">à <span class="time-highlight">16 heures</span></p>
+                    
+                        <div class="location-text">
+                            Kabbalat Panim (Accueil des mariés) dès 15h30<br>
+                            Synagogue de la Victoire, Paris
+                        </div>
+                        
+                        <a href="https://waze.com/ul?ll=48.8744,2.3387&navigate=yes" target="_blank" style="display:inline-block; margin-top:20px; color:var(--gold); text-decoration:none; border-bottom:1px solid var(--gold); font-size:0.9rem;">
+                            <i class="fas fa-location-arrow"></i> S'y rendre
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION PHOTO SUPPLEMENTAIRE -->
+        <section class="section-padding" style="text-align: center; background-color: var(--cream);">
+            <div class="container">
+                <div style="padding: 10px; background: white; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transform: rotate(-2deg); margin-bottom: 1rem;">
+                    <!-- IMAGE REMPLACÉE PAR Braha.png -->
+                    <img src="Braha.png" 
+                         alt="Notre Photo" 
+                         style="max-width: 100%; height: auto; display: block; max-height: 500px;">
+                </div>
+            </div>
+        </section>
+
+        <!-- RSVP -->
+        <section class="section-padding rsvp-section">
+            <div class="container" style="max-width: 600px;">
+                <h2>Confirmation</h2>
+                
+                <div style="text-align: center; margin-bottom: 2rem; font-family: var(--font-body); color: var(--text-grey);">
+                    <p>
+                        Merci de confirmer votre présence en remplissant le formulaire ci-dessous dès réception.<br>
+                        Votre présence est importante pour nous, et nous avons hâte de partager ces moments de joie avec vous.
+                    </p>
+                </div>
+
+                <form id="rsvp-form" onsubmit="submitForm(event)">
+                    <label>Votre Nom complet</label>
+                    <input type="text" required placeholder="Ex: Famille Cohen">
+                    
+                    <label>Serez-vous des nôtres ?</label>
+                    <select id="attendance-select" onchange="toggleGuestField()">
+                        <option value="" disabled selected>Veuillez choisir...</option>
+                        <option value="oui">Oui, be'h avec joie !</option>
+                        <option value="non">Non, malheureusement</option>
+                    </select>
+
+                    <!-- Ce bloc est caché par défaut -->
+                    <div id="guest-count-container">
+                        <label>Nombre de personnes</label>
+                        <input type="number" min="1" value="1" id="guest-count">
+                    </div>
+
+                    <button type="submit">Confirmer la présence</button>
+                    <p id="msg-success" style="color: green; text-align: center; margin-top: 10px; display: none;">Merci ! Votre réponse a été envoyée.</p>
+                </form>
+            </div>
+        </section>
+
+        <footer style="text-align: center; padding: 2rem; background: var(--dark); color: white; font-size: 0.8rem;">
+            <p>Mazal Tov !</p>
+        </footer>
+    </div>
+
+    <!-- JAVASCRIPT -->
+    <script>
+        // --- 0. SCRIPT PÉTALES DE ROSE ---
+        function createPetal() {
+            const container = document.getElementById('petals-container');
+            const petal = document.createElement('div');
+            petal.classList.add('petal');
+
+            // Taille aléatoire (entre 10px et 20px)
+            const size = Math.random() * 10 + 10;
+            petal.style.width = `${size}px`;
+            petal.style.height = `${size}px`;
+
+            // Position de départ horizontale aléatoire (0 à 100% de l'écran)
+            const left = Math.random() * 100;
+            petal.style.left = `${left}vw`;
+
+            // Durée de la chute aléatoire (entre 5s et 10s)
+            const duration = Math.random() * 5 + 5;
+            petal.style.animationDuration = `${duration}s`;
+
+            // Dérive horizontale aléatoire (le vent)
+            const drift = (Math.random() - 0.5) * 200; // entre -100px et +100px
+            petal.style.setProperty('--drift', `${drift}px`);
+
+            container.appendChild(petal);
+
+            // Supprimer le pétale une fois l'animation finie pour ne pas surcharger le navigateur
+            setTimeout(() => {
+                petal.remove();
+            }, duration * 1000);
+        }
+
+        // Lancer la création des pétales (un nouveau toutes les 400ms)
+        setInterval(createPetal, 400);
+
+
+        // 1. GESTION AUDIO ET ENTREE SITE
+        const music = document.getElementById("bg-music");
+        const musicWidget = document.getElementById("music-widget");
+        const playIcon = document.getElementById("play-icon");
+        const equalizer = document.getElementById("equalizer");
+
+        function enterSite() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            
+            // Afficher le widget
+            musicWidget.style.display = "flex";
+
+            // Tentative de lecture automatique
+            music.volume = 0.5;
+            const playPromise = music.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    // Lecture automatique réussie
+                    updateMusicUI(true);
+                }).catch(error => {
+                    // Lecture automatique bloquée par le navigateur
+                    console.log("Lecture auto empêchée par le navigateur, clic requis.");
+                    updateMusicUI(false);
+                });
+            }
+
+            setTimeout(() => {
+                document.getElementById('main-content').classList.add('visible');
+            }, 500);
+        }
+
+        function toggleMusic() {
+            // Utilise l'état réel du lecteur audio (paused) comme source de vérité
+            if (music.paused) {
+                const playPromise = music.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        updateMusicUI(true);
+                    }).catch(error => {
+                        console.error("Erreur de lecture :", error);
+                        updateMusicUI(false);
+                    });
+                }
+            } else {
+                music.pause();
+                updateMusicUI(false);
+            }
+        }
+
+        function updateMusicUI(isPlaying) {
+            if (isPlaying) {
+                playIcon.className = "fas fa-pause";
+                equalizer.classList.remove("paused");
+            } else {
+                playIcon.className = "fas fa-play";
+                equalizer.classList.add("paused");
+            }
+        }
+
+        // 2. GESTION DU CHAMP RSVP DYNAMIQUE
+        function toggleGuestField() {
+            const select = document.getElementById("attendance-select");
+            const container = document.getElementById("guest-count-container");
+            const guestInput = document.getElementById("guest-count");
+
+            if (select.value === "oui") {
+                container.classList.add("visible");
+                guestInput.setAttribute("required", "true"); // Devient obligatoire si on vient
+            } else {
+                container.classList.remove("visible");
+                guestInput.removeAttribute("required"); // Plus obligatoire si on ne vient pas
+            }
+        }
+
+        // 3. COMPTE A REBOURS
+        const weddingDate = new Date('August 25, 2025 16:00:00').getTime();
+        const timer = setInterval(() => {
+            const now = new Date().getTime();
+            const diff = weddingDate - now;
+            if (diff < 0) { clearInterval(timer); return; }
+            document.getElementById('d').innerText = Math.floor(diff / (1000 * 60 * 60 * 24));
+            document.getElementById('h').innerText = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            document.getElementById('m').innerText = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        }, 1000);
+
+        // 4. FORMULAIRE SIMULÉ
+        function submitForm(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const msg = document.getElementById('msg-success');
+            btn.innerText = "Envoi...";
+            setTimeout(() => {
+                btn.innerText = "Envoyé !";
+                btn.style.backgroundColor = "#4CAF50";
+                msg.style.display = 'block';
+                e.target.reset();
+                // Remettre le champ invité caché après reset
+                document.getElementById("guest-count-container").classList.remove("visible");
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
